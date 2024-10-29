@@ -1,1 +1,8 @@
-/target
+# Ignore build outputs
+/target/
+
+# Ignore Cargo lock file (optional)
+Cargo.lock
+
+# Ignore backups and temporary files
+*.rs.bk
