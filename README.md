@@ -26,7 +26,7 @@ To use the Anime Schedule CLI, follow the steps below to install it on your mach
 
     Clone this repository to your local machine:
 
-    `git clone https://github.com/yourusername/anime-schedule-cli.git`
+    `git clone https://github.com/yourusername/anime-schedule-cli.git` \
     `cd anime-schedule-cli`
 
 2.  **Install the CLI tool:**
@@ -56,13 +56,13 @@ To get all the anime that are airing today, use the following command:
 
 This will print a list of all the anime airing today, including the episode number and the airing time in both UTC and Indian Standard Time (IST).
 
-`Yao Shen Ji 8 - Episode 27 airs at 2024-10-29 07:30:00 IST`
-`A Terrified Teacher at Ghoul School! - Episode 4 airs at 2024-10-29 19:30:00 IST`
-`I’ll Become a Villainess Who Goes Down in History - Episode 5 airs at 2024-10-29 20:00:00 IST`
-`Hibike! Euphonium 3: Extra Episodes - Episode 5 airs at 2024-10-29 20:30:00 IST`
-`Tying the Knot with an Amagami Sister - Episode 5 airs at 2024-10-29 20:30:00 IST`
+`Yao Shen Ji 8 - Episode 27 airs at 2024-10-29 07:30:00 IST` \
+`A Terrified Teacher at Ghoul School! - Episode 4 airs at 2024-10-29 19:30:00 IST`\
+`I’ll Become a Villainess Who Goes Down in History - Episode 5 airs at 2024-10-29 20:00:00 IST`\
+`Hibike! Euphonium 3: Extra Episodes - Episode 5 airs at 2024-10-29 20:30:00 IST`\
+`Tying the Knot with an Amagami Sister - Episode 5 airs at 2024-10-29 20:30:00 IST`\
 `Pochars - Episode 4 airs at 2024-10-29 21:55:00 IST`
-`Tasuketsu -Fate of the Majority- - Episode 16 airs at 2024-10-29 22:29:00 IST`
+`Tasuketsu -Fate of the Majority- - Episode 16 airs at 2024-10-29 22:29:00 IST`\
 `Chibi Godzilla Raids Again Season 2 - Episode 31 airs at 2024-10-30 03:37:00 IST`
 
 ### Get Release Dates for a Specific Anime
