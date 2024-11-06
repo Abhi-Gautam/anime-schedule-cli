@@ -2,6 +2,8 @@
 use chrono::{FixedOffset, TimeZone, Utc};
 use clap::{Parser, Subcommand};
 use serde::Deserialize;
+#[macro_use] extern crate prettytable;
+use prettytable::{color, format, Attr, Cell, Row, Table};
 
 // Command-line interface setup using Clap
 #[derive(Parser)]
@@ -209,6 +211,15 @@ fn fetch_today_anime() {
     };
 
     // Display the results
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
+
+    // Add a header row
+    table.set_titles(row![
+        b->"Title",
+        b->"Episode",
+        b->"Airs at (IST)"
+    ]);
     for schedule in response.data.Page.airingSchedules {
         let title = schedule
             .media
@@ -217,6 +228,12 @@ fn fetch_today_anime() {
             .clone()
             .or(schedule.media.title.romaji.clone())
             .unwrap_or_else(|| "Unknown Title".to_string());
+        let title_cell = Cell::new(&title)
+            .with_style(Attr::Bold)
+            .with_style(Attr::ForegroundColor(color::CYAN));
+        let episode_cell = Cell::new(&schedule.episode.to_string())
+            .with_style(Attr::Bold)
+            .with_style(Attr::ForegroundColor(color::YELLOW));
         let airing_time = Utc.timestamp_opt(schedule.airingAt, 0);
 
         match airing_time {
@@ -225,12 +242,16 @@ fn fetch_today_anime() {
                 let ist_offset = FixedOffset::east_opt(5 * 3600 + 30 * 60).unwrap(); // IST is UTC+5:30
                 let ist_time = utc_time.with_timezone(&ist_offset);
 
-                println!(
-                    "{} - Episode {} airs at {} IST",
-                    title,
-                    schedule.episode,
-                    ist_time.format("%Y-%m-%d %H:%M:%S")
-                );
+                // println!(
+                //     "{} - Episode {} airs at {} IST",
+                //     title,
+                //     schedule.episode,
+                //     ist_time.format("%Y-%m-%d %H:%M:%S")
+                // );
+                let time_cell = Cell::new(&ist_time.format("%Y-%m-%d %H:%M:%S").to_string())
+                    .with_style(Attr::Bold)
+                    .with_style(Attr::ForegroundColor(color::GREEN));
+                table.add_row(Row::new(vec![title_cell, episode_cell, time_cell]));
             }
             chrono::LocalResult::None => {
                 println!("Invalid airing time for Episode {}", schedule.episode);
@@ -240,6 +261,7 @@ fn fetch_today_anime() {
             }
         }
     }
+    table.printstd();
 }
 
 // Function to fetch release dates of a specific anime
