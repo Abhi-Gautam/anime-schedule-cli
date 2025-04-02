@@ -1,13 +1,43 @@
 [package]
-name = "anime-schedule"
+name = "animesh"
 version = "0.1.0"
 edition = "2021"
+authors = ["Abhishek Gautam"]
+description = "A powerful CLI tool for anime fans to track their favorite shows and discover new anime"
+license = "MIT"
+repository = "https://github.com/yourusername/animesh"
+keywords = ["anime", "cli", "schedule", "anilist", "manga"]
+categories = ["command-line-utilities", "entertainment"]
 
 [dependencies]
-reqwest = { version = "0.12.9", features = ["json", "blocking"] }
+chrono = "0.4"
+clap = { version = "4.4", features = ["derive"] }
+prettytable-rs = "0.10"
+reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-chrono = { version = "0.4", features = ["serde"] }
-clap = { version = "4.0", features = ["derive"] }
+tokio = { version = "1.0", features = ["full"] }
+thiserror = "1.0"
+anyhow = "1.0"
+async-trait = "0.1"
 colored = "2.0"
-prettytable-rs = "0.10.0"
+
+[dev-dependencies]
+tokio-test = "0.4"
+mockall = "0.11"
+
+[[example]]
+name = "schedule"
+path = "examples/schedule.rs"
+
+[[example]]
+name = "search"
+path = "examples/search.rs"
+
+[[example]]
+name = "info"
+path = "examples/info.rs"
+
+[[example]]
+name = "top"
+path = "examples/top.rs"
