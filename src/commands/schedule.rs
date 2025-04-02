@@ -22,7 +22,6 @@ pub struct ScheduleCommand {
 impl ScheduleCommand {
     /// Create a new schedule command
     pub fn new(day: Option<String>, interval: u32, timezone: Option<String>) -> Self {
-        println!("Creating ScheduleCommand with timezone: {:?}", timezone);
         Self {
             day,
             interval,
@@ -33,60 +32,45 @@ impl ScheduleCommand {
 
     /// Get the timezone to use for display
     fn get_timezone(&self) -> FixedOffset {
-        let tz = if let Some(tz) = &self.timezone {
-            println!("Using specified timezone: {}", tz);
+        if let Some(tz) = &self.timezone {
             match tz.to_uppercase().as_str() {
                 "UTC" => FixedOffset::east_opt(0).unwrap(),
                 "IST" => FixedOffset::east_opt(5 * 3600 + 30 * 60).unwrap(), // UTC+5:30
                 "JST" => FixedOffset::east_opt(9 * 3600).unwrap(), // UTC+9
                 "PST" => FixedOffset::west_opt(8 * 3600).unwrap(), // UTC-8
                 "EST" => FixedOffset::west_opt(5 * 3600).unwrap(), // UTC-5
-                _ => {
-                    println!("Unknown timezone specified, falling back to user timezone");
-                    get_user_timezone()
-                }
+                _ => get_user_timezone(), // Fallback to user's timezone
             }
         } else {
-            println!("No timezone specified, using user timezone");
             get_user_timezone()
-        };
-        println!("Final timezone offset: {} seconds", tz.utc_minus_local());
-        tz
+        }
     }
 
     /// Get the day to show schedule for
     fn get_target_day(&self) -> u32 {
-        let day = if let Some(day) = &self.day {
-            println!("Using specified day: {}", day);
+        if let Some(day) = &self.day {
             parse_day_of_week(day).unwrap_or(Utc::now().weekday().num_days_from_monday())
         } else {
-            println!("No day specified, using current day");
             Utc::now().weekday().num_days_from_monday()
-        };
-        println!("Target day: {}", day);
-        day
+        }
     }
 
     /// Get the time range for the schedule
     fn get_time_range(&self) -> (i64, i64) {
         let timezone = self.get_timezone();
         let now_utc = Utc::now();
-        println!("Current UTC time: {}", now_utc);
         let now_local = now_utc.with_timezone(&timezone);
-        println!("Current local time: {}", now_local);
         
         let target_day = self.get_target_day();
         let current_day = now_local.weekday().num_days_from_monday();
-        let days_diff = (target_day as i64 - current_day as i64 + 7) % 7;
-        println!("Days difference: {}", days_diff);
+        let days_diff = if target_day > current_day {
+            target_day - current_day
+        } else {
+            0
+        };
         
-        let start = now_local.timestamp() + (days_diff * 24 * 3600);
+        let start = now_local.timestamp() + ((days_diff as i64) * 24 * 3600);
         let end = start + ((self.interval as i64) * 24 * 3600);
-        
-        println!("Time range: {} to {}", 
-            Utc.timestamp_opt(start, 0).unwrap(),
-            Utc.timestamp_opt(end, 0).unwrap()
-        );
         
         (start, end)
     }
@@ -96,11 +80,6 @@ impl ScheduleCommand {
         let now = Utc::now().timestamp();
         let diff = airing_at - now;
         let duration = Duration::seconds(diff);
-        println!("Relative time calculation - airing_at: {}, now: {}, diff: {}", 
-            Utc.timestamp_opt(airing_at, 0).unwrap(),
-            Utc.timestamp_opt(now, 0).unwrap(),
-            diff
-        );
 
         if diff < 0 {
             // Past time
@@ -145,7 +124,6 @@ impl Command for ScheduleCommand {
             let sign = if offset >= 0 { "+" } else { "-" };
             format!("UTC{}{:02}:{:02}", sign, hours, minutes)
         };
-        println!("Display timezone: {}", tz_name);
 
         // GraphQL query for airing schedule
         let query = r#"
@@ -186,10 +164,8 @@ impl Command for ScheduleCommand {
             let airing_at: i64 = schedule["airingAt"].as_i64().unwrap_or(0);
             
             let airing_time = Utc.timestamp_opt(airing_at, 0).unwrap();
-            println!("Processing episode - Title: {}, Airing UTC: {}", title, airing_time);
             let formatted_time = format_datetime(airing_time, timezone);
             let relative_time = self.format_relative_time(airing_at);
-            println!("Formatted time: {}, Relative time: {}", formatted_time, relative_time);
 
             table.add_row(Row::new(vec![
                 styled_cell(title, color::CYAN),

@@ -3,16 +3,46 @@ use std::env;
 
 /// Get the user's timezone from environment variables
 pub fn get_user_timezone() -> FixedOffset {
+    // Try to get timezone from TZ environment variable
     if let Ok(tz) = env::var("TZ") {
-        // Try to parse the timezone string
-        if let Ok(offset) = tz.parse::<i32>() {
-            return FixedOffset::east_opt(offset * 3600)
-                .unwrap_or(FixedOffset::east_opt(0).unwrap());
+        println!("Found TZ environment variable: {}", tz);
+        match tz.to_uppercase().as_str() {
+            "UTC" => return FixedOffset::east_opt(0).unwrap(),
+            "IST" => return FixedOffset::east_opt(5 * 3600 + 30 * 60).unwrap(), // UTC+5:30
+            "JST" => return FixedOffset::east_opt(9 * 3600).unwrap(), // UTC+9
+            "PST" => return FixedOffset::west_opt(8 * 3600).unwrap(), // UTC-8
+            "EST" => return FixedOffset::west_opt(5 * 3600).unwrap(), // UTC-5
+            _ => {
+                // Try to parse as offset (e.g., "+05:30")
+                if let Ok(offset) = tz.parse::<i32>() {
+                    return FixedOffset::east_opt(offset * 3600)
+                        .unwrap_or(FixedOffset::east_opt(0).unwrap());
+                }
+            }
         }
     }
 
-    // Default to UTC if no timezone is set
-    FixedOffset::east_opt(0).unwrap()
+    // Try to get timezone from system
+    #[cfg(target_os = "macos")]
+    {
+        if let Ok(output) = std::process::Command::new("systemsetup")
+            .arg("-gettimezone")
+            .output() {
+            if let Ok(tz) = String::from_utf8(output.stdout) {
+                match tz.trim().to_uppercase().as_str() {
+                    "UTC" => return FixedOffset::east_opt(0).unwrap(),
+                    "IST" => return FixedOffset::east_opt(5 * 3600 + 30 * 60).unwrap(),
+                    "JST" => return FixedOffset::east_opt(9 * 3600).unwrap(),
+                    "PST" => return FixedOffset::west_opt(8 * 3600).unwrap(),
+                    "EST" => return FixedOffset::west_opt(5 * 3600).unwrap(),
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    // Default to IST (UTC+5:30) for Indian users
+    FixedOffset::east_opt(5 * 3600 + 30 * 60).unwrap()
 }
 
 /// Parse a day of the week string into a number (0-6, where 0 is Monday)
@@ -54,6 +84,13 @@ mod tests {
             .timestamp();
 
         (start, end)
+    }
+
+    #[test]
+    fn test_get_user_timezone() {
+        let tz = get_user_timezone();
+        println!("User timezone offset: {} seconds", tz.utc_minus_local());
+        assert!(tz.utc_minus_local() >= -14 * 3600 && tz.utc_minus_local() <= 14 * 3600);
     }
 
     #[test]
