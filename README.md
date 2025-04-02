@@ -1,87 +1,173 @@
-Anime Schedule CLI
-==================
+# Animesh - Anime Schedule & Information CLI
 
-**Anime Schedule CLI** is a command-line tool built in Rust that allows users to fetch airing schedules and release dates of their favorite anime. This tool fetches data from AniList (or any other API you integrate with) and displays the information in your terminal.
+A powerful command-line interface tool for anime fans to track their favorite shows, discover new anime, and get detailed information about anime and manga.
 
-Features
---------
+## Features
 
--   Fetch all animes airing today.
--   Get the next release date for a specific anime by name.
+- 📅 View anime airing schedules by day
+- 🔍 Search for anime and manga
+- ℹ️ Get detailed information about anime/manga
+- 🏆 Browse top-rated anime and manga
+- 🌐 Timezone support for accurate airing times
+- 🎨 Beautiful colored output in tables
+- 📊 Comprehensive filtering options
 
-Installation
-------------
+## Installation
 
-To use the Anime Schedule CLI, follow the steps below to install it on your machine.
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/animesh.git
+cd animesh
 
-### Prerequisites
+# Build the project
+cargo build --release
 
--   Rust installed on your machine. You can check if you have Rust installed by running the following command:
+# Run the binary
+./target/release/animesh
+```
 
-    `rustc --version`
+## Usage
 
-### Build and Install
+### Schedule Command
+View anime airing schedules:
+```bash
+# View today's schedule
+animesh schedule
 
-1.  **Clone the repository:**
+# View schedule for a specific day
+animesh schedule monday
 
-    Clone this repository to your local machine:
+# View schedule with custom timezone
+animesh schedule --timezone UTC
+```
 
-    `git clone https://github.com/yourusername/anime-schedule-cli.git` \
-    `cd anime-schedule-cli`
+### Search Command
+Search for anime or manga:
+```bash
+# Search for anime
+animesh search "Attack on Titan" --type anime
 
-2.  **Install the CLI tool:**
+# Search with filters
+animesh search "Demon Slayer" --year 2023 --season WINTER
 
-    You can install the CLI tool locally using `cargo install`. This will compile the project and place the binary in your Cargo bin directory, which is usually in your system's PATH.
+# Search for manga
+animesh search "One Piece" --type manga
+```
 
-    `cargo install --path .`
+### Info Command
+Get detailed information about anime/manga:
+```bash
+# Get basic anime info
+animesh info 1 --type anime
 
-4.  **Verify the installation:**
+# Get info with characters and staff
+animesh info 1 --type anime --characters --staff
 
-    Once installed, you can check if the CLI tool is available by typing:
+# Get manga info
+animesh info 1 --type manga
+```
 
-    `anime-schedule --help`
+### Top Command
+View top-rated anime/manga:
+```bash
+# View top anime
+animesh top --type anime
 
-    This should display the help message for the tool.
+# View top anime in a specific genre
+animesh top --type anime --genre "Action"
 
-Usage
------
+# View top manga with custom limit
+animesh top --type manga --limit 25
+```
 
-You can now use the Anime Schedule CLI tool from your terminal. Below are the available commands:
+## Examples
 
-### Fetch Today's Airing Anime
+The project includes comprehensive examples demonstrating all features. Run them using:
 
-To get all the anime that are airing today, use the following command:
+```bash
+cargo run --example <example_name>
+```
 
-`anime-schedule today`
+Available examples:
+- `schedule`: Demonstrates schedule viewing features
+- `search`: Shows various search capabilities
+- `info`: Examples of getting detailed information
+- `top`: Demonstrates top-rated content features
 
-This will print a list of all the anime airing today, including the episode number and the airing time in both UTC and Indian Standard Time (IST).
+See the [examples README](examples/README.md) for detailed information about each example.
 
-`Yao Shen Ji 8 - Episode 27 airs at 2024-10-29 07:30:00 IST` \
-`A Terrified Teacher at Ghoul School! - Episode 4 airs at 2024-10-29 19:30:00 IST`\
-`I’ll Become a Villainess Who Goes Down in History - Episode 5 airs at 2024-10-29 20:00:00 IST`\
-`Hibike! Euphonium 3: Extra Episodes - Episode 5 airs at 2024-10-29 20:30:00 IST`\
-`Tying the Knot with an Amagami Sister - Episode 5 airs at 2024-10-29 20:30:00 IST`\
-`Pochars - Episode 4 airs at 2024-10-29 21:55:00 IST`
-`Tasuketsu -Fate of the Majority- - Episode 16 airs at 2024-10-29 22:29:00 IST`\
-`Chibi Godzilla Raids Again Season 2 - Episode 31 airs at 2024-10-30 03:37:00 IST`
+## Project Structure
 
-### Get Release Dates for a Specific Anime
+```
+animesh/
+├── src/
+│   ├── api/          # API client and GraphQL queries
+│   │   └── mod.rs
+│   ├── commands/     # Command implementations
+│   │   ├── schedule.rs
+│   │   ├── search.rs
+│   │   ├── info.rs
+│   │   ├── top.rs
+│   │   └── mod.rs
+│   ├── display/      # Output formatting and tables
+│   ├── utils/        # Utility functions
+│   ├── lib.rs        # Library exports
+│   └── main.rs       # CLI entry point
+├── examples/         # Usage examples
+│   ├── schedule.rs
+│   ├── search.rs
+│   ├── info.rs
+│   ├── top.rs
+│   └── README.md
+└── README.md
+```
 
-To get the release dates for a specific anime, use the `release` command followed by the anime's name:
+## Dependencies
 
-`anime-schedule release "Naruto"`
+- `tokio`: Async runtime
+- `clap`: Command line argument parsing
+- `reqwest`: HTTP client
+- `serde`: JSON serialization/deserialization
+- `prettytable-rs`: Table formatting
+- `colored`: Terminal colors
+- `chrono`: Date and time handling
 
-This will print the next episode's airing time and total episodes for the specified anime.
+## Development
 
-Uninstall
----------
+```bash
+# Run tests
+cargo test
 
-If you want to uninstall the Anime Schedule CLI tool, you can use Cargo's `uninstall` command:
+# Run specific example
+cargo run --example schedule
 
-bash
+# Build documentation
+cargo doc --open
+```
 
-Copy code
+## Recent Changes
 
-`cargo uninstall anime-schedule`
+- Added comprehensive example programs
+- Implemented colored output for better readability
+- Added timezone support for schedule command
+- Created library interface for better code organization
+- Added detailed test cases for all commands
+- Improved error handling and user feedback
+- Added support for manga-related operations
 
-This will remove the CLI tool from your system.
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- [AniList](https://anilist.co/) for providing the API
+- All contributors and users of the project
