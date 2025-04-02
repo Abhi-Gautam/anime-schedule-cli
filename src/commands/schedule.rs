@@ -1,6 +1,6 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use chrono::{Datelike, FixedOffset, TimeZone, Utc};
+use chrono::{Datelike, FixedOffset, TimeZone, Utc, Duration};
 use prettytable::{color, Row};
 use serde_json::Value;
 
@@ -8,23 +8,24 @@ use crate::{
     api::AniListClient,
     commands::Command,
     display::{create_table, format_datetime, styled_cell},
-    utils::{get_day_timestamps, get_user_timezone, parse_day_of_week},
+    utils::{get_user_timezone, parse_day_of_week},
 };
 
 /// Command to show upcoming anime airing schedule
 pub struct ScheduleCommand {
     day: Option<String>,
-    today: bool,
+    interval: u32,
     timezone: Option<String>,
     client: AniListClient,
 }
 
 impl ScheduleCommand {
     /// Create a new schedule command
-    pub fn new(day: Option<String>, today: bool, timezone: Option<String>) -> Self {
+    pub fn new(day: Option<String>, interval: u32, timezone: Option<String>) -> Self {
+        println!("Creating ScheduleCommand with timezone: {:?}", timezone);
         Self {
             day,
-            today,
+            interval,
             timezone,
             client: AniListClient::new(),
         }
@@ -32,22 +33,98 @@ impl ScheduleCommand {
 
     /// Get the timezone to use for display
     fn get_timezone(&self) -> FixedOffset {
-        if let Some(_tz) = &self.timezone {
-            // TODO: Parse timezone string properly
-            FixedOffset::east_opt(0).unwrap()
+        let tz = if let Some(tz) = &self.timezone {
+            println!("Using specified timezone: {}", tz);
+            match tz.to_uppercase().as_str() {
+                "UTC" => FixedOffset::east_opt(0).unwrap(),
+                "IST" => FixedOffset::east_opt(5 * 3600 + 30 * 60).unwrap(), // UTC+5:30
+                "JST" => FixedOffset::east_opt(9 * 3600).unwrap(), // UTC+9
+                "PST" => FixedOffset::west_opt(8 * 3600).unwrap(), // UTC-8
+                "EST" => FixedOffset::west_opt(5 * 3600).unwrap(), // UTC-5
+                _ => {
+                    println!("Unknown timezone specified, falling back to user timezone");
+                    get_user_timezone()
+                }
+            }
         } else {
+            println!("No timezone specified, using user timezone");
             get_user_timezone()
-        }
+        };
+        println!("Final timezone offset: {} seconds", tz.utc_minus_local());
+        tz
     }
 
     /// Get the day to show schedule for
     fn get_target_day(&self) -> u32 {
-        if self.today {
-            Utc::now().weekday().num_days_from_monday()
-        } else if let Some(day) = &self.day {
-            parse_day_of_week(day).unwrap_or(0)
+        let day = if let Some(day) = &self.day {
+            println!("Using specified day: {}", day);
+            parse_day_of_week(day).unwrap_or(Utc::now().weekday().num_days_from_monday())
         } else {
-            0 // Default to Monday
+            println!("No day specified, using current day");
+            Utc::now().weekday().num_days_from_monday()
+        };
+        println!("Target day: {}", day);
+        day
+    }
+
+    /// Get the time range for the schedule
+    fn get_time_range(&self) -> (i64, i64) {
+        let timezone = self.get_timezone();
+        let now_utc = Utc::now();
+        println!("Current UTC time: {}", now_utc);
+        let now_local = now_utc.with_timezone(&timezone);
+        println!("Current local time: {}", now_local);
+        
+        let target_day = self.get_target_day();
+        let current_day = now_local.weekday().num_days_from_monday();
+        let days_diff = (target_day as i64 - current_day as i64 + 7) % 7;
+        println!("Days difference: {}", days_diff);
+        
+        let start = now_local.timestamp() + (days_diff * 24 * 3600);
+        let end = start + ((self.interval as i64) * 24 * 3600);
+        
+        println!("Time range: {} to {}", 
+            Utc.timestamp_opt(start, 0).unwrap(),
+            Utc.timestamp_opt(end, 0).unwrap()
+        );
+        
+        (start, end)
+    }
+
+    /// Format relative time (e.g., "2h ago", "in 3h")
+    fn format_relative_time(&self, airing_at: i64) -> String {
+        let now = Utc::now().timestamp();
+        let diff = airing_at - now;
+        let duration = Duration::seconds(diff);
+        println!("Relative time calculation - airing_at: {}, now: {}, diff: {}", 
+            Utc.timestamp_opt(airing_at, 0).unwrap(),
+            Utc.timestamp_opt(now, 0).unwrap(),
+            diff
+        );
+
+        if diff < 0 {
+            // Past time
+            let abs_duration = Duration::seconds(-diff);
+            if abs_duration.num_hours() > 24 {
+                format!("{}d ago", abs_duration.num_days())
+            } else if abs_duration.num_hours() > 0 {
+                format!("{}h ago", abs_duration.num_hours())
+            } else if abs_duration.num_minutes() > 0 {
+                format!("{}m ago", abs_duration.num_minutes())
+            } else {
+                "just now".to_string()
+            }
+        } else {
+            // Future time
+            if duration.num_hours() > 24 {
+                format!("in {}d", duration.num_days())
+            } else if duration.num_hours() > 0 {
+                format!("in {}h", duration.num_hours())
+            } else if duration.num_minutes() > 0 {
+                format!("in {}m", duration.num_minutes())
+            } else {
+                "now".to_string()
+            }
         }
     }
 }
@@ -56,8 +133,19 @@ impl ScheduleCommand {
 impl Command for ScheduleCommand {
     async fn execute(&self) -> Result<()> {
         let timezone = self.get_timezone();
-        let target_day = self.get_target_day();
-        let (start, end) = get_day_timestamps(target_day);
+        let (start, end) = self.get_time_range();
+
+        // Get timezone name for display
+        let tz_name = if let Some(tz) = &self.timezone {
+            tz.to_uppercase()
+        } else {
+            let offset = timezone.utc_minus_local();
+            let hours = offset.abs() / 3600;
+            let minutes = (offset.abs() % 3600) / 60;
+            let sign = if offset >= 0 { "+" } else { "-" };
+            format!("UTC{}{:02}:{:02}", sign, hours, minutes)
+        };
+        println!("Display timezone: {}", tz_name);
 
         // GraphQL query for airing schedule
         let query = r#"
@@ -85,8 +173,8 @@ impl Command for ScheduleCommand {
         let response: Value = self.client.query(query, variables).await?;
         let schedules = response["data"]["Page"]["airingSchedules"].as_array().unwrap();
 
-        // Create and populate table
-        let mut table = create_table(&["Title", "Episode", "Airs at"]);
+        // Create and populate table with timezone header
+        let mut table = create_table(&[&format!("Schedule ({})", tz_name), "Episode", "Time", "Status"]);
         
         for schedule in schedules {
             let title = schedule["media"]["title"]["english"]
@@ -98,12 +186,16 @@ impl Command for ScheduleCommand {
             let airing_at: i64 = schedule["airingAt"].as_i64().unwrap_or(0);
             
             let airing_time = Utc.timestamp_opt(airing_at, 0).unwrap();
+            println!("Processing episode - Title: {}, Airing UTC: {}", title, airing_time);
             let formatted_time = format_datetime(airing_time, timezone);
+            let relative_time = self.format_relative_time(airing_at);
+            println!("Formatted time: {}, Relative time: {}", formatted_time, relative_time);
 
             table.add_row(Row::new(vec![
                 styled_cell(title, color::CYAN),
                 styled_cell(&episode.to_string(), color::YELLOW),
                 styled_cell(&formatted_time, color::GREEN),
+                styled_cell(&relative_time, if airing_at < Utc::now().timestamp() { color::RED } else { color::BLUE }),
             ]));
         }
 
@@ -118,84 +210,65 @@ mod tests {
 
     #[tokio::test]
     async fn test_schedule_command_today() {
-        let command = ScheduleCommand::new(None, true, None);
+        let command = ScheduleCommand::new(None, 2, None);
         assert!(command.execute().await.is_ok());
     }
 
     #[tokio::test]
     async fn test_schedule_command_specific_day() {
-        let command = ScheduleCommand::new(Some("monday".to_string()), false, None);
+        let command = ScheduleCommand::new(Some("monday".to_string()), 2, None);
         assert!(command.execute().await.is_ok());
     }
 
     #[tokio::test]
     async fn test_schedule_command_with_timezone() {
-        let command = ScheduleCommand::new(None, true, Some("UTC".to_string()));
+        let command = ScheduleCommand::new(None, 2, Some("UTC".to_string()));
         assert!(command.execute().await.is_ok());
     }
 
     #[test]
     fn test_get_timezone() {
-        let command = ScheduleCommand::new(None, false, None);
+        let command = ScheduleCommand::new(None, 2, None);
         let tz = command.get_timezone();
-        // The timezone should be valid (either UTC or a specific offset)
         assert!(tz.utc_minus_local() >= -14 * 3600 && tz.utc_minus_local() <= 14 * 3600);
+
+        let command = ScheduleCommand::new(None, 2, Some("UTC".to_string()));
+        let tz = command.get_timezone();
+        assert_eq!(tz.utc_minus_local(), 0);
+
+        let command = ScheduleCommand::new(None, 2, Some("IST".to_string()));
+        let tz = command.get_timezone();
+        assert_eq!(tz.utc_minus_local(), -(5 * 3600 + 30 * 60));
     }
 
     #[test]
     fn test_get_target_day() {
-        let command = ScheduleCommand::new(None, true, None);
+        let command = ScheduleCommand::new(None, 2, None);
         let day = command.get_target_day();
         assert!(day < 7);
+
+        let command = ScheduleCommand::new(Some("monday".to_string()), 2, None);
+        assert_eq!(command.get_target_day(), 0);
     }
 
     #[test]
-    fn test_parse_day_of_week() {
-        let command = ScheduleCommand::new(Some("monday".to_string()), false, None);
-        assert_eq!(command.get_target_day(), 0);
+    fn test_get_time_range() {
+        let command = ScheduleCommand::new(None, 2, None);
+        let (start, end) = command.get_time_range();
+        assert!(end - start == 2 * 24 * 3600);
+    }
 
-        let command = ScheduleCommand::new(Some("tuesday".to_string()), false, None);
-        assert_eq!(command.get_target_day(), 1);
-
-        let command = ScheduleCommand::new(Some("wednesday".to_string()), false, None);
-        assert_eq!(command.get_target_day(), 2);
-
-        let command = ScheduleCommand::new(Some("thursday".to_string()), false, None);
-        assert_eq!(command.get_target_day(), 3);
-
-        let command = ScheduleCommand::new(Some("friday".to_string()), false, None);
-        assert_eq!(command.get_target_day(), 4);
-
-        let command = ScheduleCommand::new(Some("saturday".to_string()), false, None);
-        assert_eq!(command.get_target_day(), 5);
-
-        let command = ScheduleCommand::new(Some("sunday".to_string()), false, None);
-        assert_eq!(command.get_target_day(), 6);
-
-        // Test short forms
-        let command = ScheduleCommand::new(Some("mon".to_string()), false, None);
-        assert_eq!(command.get_target_day(), 0);
-
-        let command = ScheduleCommand::new(Some("tue".to_string()), false, None);
-        assert_eq!(command.get_target_day(), 1);
-
-        let command = ScheduleCommand::new(Some("wed".to_string()), false, None);
-        assert_eq!(command.get_target_day(), 2);
-
-        let command = ScheduleCommand::new(Some("thu".to_string()), false, None);
-        assert_eq!(command.get_target_day(), 3);
-
-        let command = ScheduleCommand::new(Some("fri".to_string()), false, None);
-        assert_eq!(command.get_target_day(), 4);
-
-        let command = ScheduleCommand::new(Some("sat".to_string()), false, None);
-        assert_eq!(command.get_target_day(), 5);
-
-        let command = ScheduleCommand::new(Some("sun".to_string()), false, None);
-        assert_eq!(command.get_target_day(), 6);
-
-        // Test invalid day
-        let command = ScheduleCommand::new(Some("invalid".to_string()), false, None);
-        assert_eq!(command.get_target_day(), 0); // Should default to Monday
+    #[test]
+    fn test_format_relative_time() {
+        let command = ScheduleCommand::new(None, 2, None);
+        let now = Utc::now().timestamp();
+        
+        // Test past times
+        assert!(command.format_relative_time(now - 3600).contains("1h ago"));
+        assert!(command.format_relative_time(now - 86400).contains("1d ago"));
+        
+        // Test future times
+        assert!(command.format_relative_time(now + 3600).contains("in 1h"));
+        assert!(command.format_relative_time(now + 86400).contains("in 1d"));
     }
 } 
