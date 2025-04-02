@@ -3,6 +3,7 @@
 
 # Ignore Cargo lock file (optional)
 Cargo.lock
+.DS_Store
 
 # Ignore backups and temporary files
 *.rs.bk
