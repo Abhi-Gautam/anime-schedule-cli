@@ -78,8 +78,14 @@ impl Command for SearchCommand {
             "season": self.season,
         });
 
+        println!("Search Query: {}", self.query);
+        println!("Variables: {}", serde_json::to_string_pretty(&variables)?);
+        
         let response: Value = self.client.query(query, variables).await?;
+        println!("Raw API Response: {}", serde_json::to_string_pretty(&response)?);
+        
         let media = response["data"]["Page"]["media"].as_array().unwrap();
+        println!("Number of results: {}", media.len());
 
         // Create and populate table
         let mut table = create_table(&[

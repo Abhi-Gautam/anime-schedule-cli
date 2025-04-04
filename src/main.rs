@@ -6,7 +6,7 @@ mod utils;
 
 use clap::{Parser, Subcommand};
 use commands::{
-    Command, ScheduleCommand, SearchCommand, InfoCommand, TopCommand,
+    Command, ScheduleCommand,
 };
 use anyhow::Result;
 use tokio;
@@ -35,61 +35,6 @@ pub enum Commands {
         #[arg(short = 't', long = "timezone")]
         timezone: Option<String>,
     },
-    /// Search for anime or manga
-    Search {
-        /// Search query
-        query: String,
-        /// Search type (anime or manga)
-        #[arg(short, long, value_enum, default_value_t = SearchType::Anime)]
-        type_: SearchType,
-        /// Filter by year
-        #[arg(short = 'y', long)]
-        year: Option<i32>,
-        /// Filter by season (WINTER, SPRING, SUMMER, FALL)
-        #[arg(short = 's', long)]
-        season: Option<String>,
-    },
-    /// Get detailed information about an anime or manga
-    Info {
-        /// ID of the anime or manga
-        id: i32,
-        /// Type of media (anime or manga)
-        #[arg(short, long, value_enum, default_value_t = SearchType::Anime)]
-        type_: SearchType,
-        /// Include character information
-        #[arg(short = 'c', long)]
-        characters: bool,
-        /// Include staff information
-        #[arg(short = 's', long)]
-        staff: bool,
-    },
-    /// View top anime or manga
-    Top {
-        /// Type of media to show (anime or manga)
-        #[arg(short, long, value_enum, default_value_t = SearchType::Anime)]
-        type_: SearchType,
-        /// Filter by genre
-        #[arg(short = 'g', long)]
-        genre: Option<String>,
-        /// Number of items to show (default: 10)
-        #[arg(short = 'l', long, default_value_t = 10)]
-        limit: usize,
-    },
-}
-
-#[derive(clap::ValueEnum, Clone, Debug)]
-pub enum SearchType {
-    Anime,
-    Manga,
-}
-
-impl std::fmt::Display for SearchType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            SearchType::Anime => write!(f, "ANIME"),
-            SearchType::Manga => write!(f, "MANGA"),
-        }
-    }
 }
 
 #[tokio::main]
@@ -102,33 +47,6 @@ async fn main() -> Result<()> {
                 .execute()
                 .await
                 .expect("Failed to execute schedule command");
-        }
-        Commands::Search { query, type_, year, season } => {
-            SearchCommand::new(
-                query.clone(),
-                Some(type_.to_string()),
-                *year,
-                season.clone(),
-            )
-                .execute()
-                .await
-                .expect("Failed to execute search command");
-        }
-        Commands::Info { id, type_, characters, staff } => {
-            InfoCommand::new(*id, type_.to_string(), *characters, *staff)
-                .execute()
-                .await
-                .expect("Failed to execute info command");
-        }
-        Commands::Top { type_, genre, limit } => {
-            TopCommand::new(
-                Some(type_.to_string()),
-                genre.clone(),
-                *limit,
-            )
-                .execute()
-                .await
-                .expect("Failed to execute top command");
         }
     }
     Ok(())

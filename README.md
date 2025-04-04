@@ -5,9 +5,6 @@ A powerful command-line interface tool for anime fans to track their favorite sh
 ## Features
 
 - 📅 View anime airing schedules by day
-- 🔍 Search for anime and manga
-- ℹ️ Get detailed information about anime/manga
-- 🏆 Browse top-rated anime and manga
 - 🌐 Timezone support for accurate airing times
 - 🎨 Beautiful colored output in tables
 - 📊 Comprehensive filtering options
@@ -41,45 +38,6 @@ animesh schedule monday
 animesh schedule --timezone UTC
 ```
 
-### Search Command
-Search for anime or manga:
-```bash
-# Search for anime
-animesh search "Attack on Titan" --type anime
-
-# Search with filters
-animesh search "Demon Slayer" --year 2023 --season WINTER
-
-# Search for manga
-animesh search "One Piece" --type manga
-```
-
-### Info Command
-Get detailed information about anime/manga:
-```bash
-# Get basic anime info
-animesh info 1 --type anime
-
-# Get info with characters and staff
-animesh info 1 --type anime --characters --staff
-
-# Get manga info
-animesh info 1 --type manga
-```
-
-### Top Command
-View top-rated anime/manga:
-```bash
-# View top anime
-animesh top --type anime
-
-# View top anime in a specific genre
-animesh top --type anime --genre "Action"
-
-# View top manga with custom limit
-animesh top --type manga --limit 25
-```
-
 ## Examples
 
 The project includes comprehensive examples demonstrating all features. Run them using:
@@ -90,9 +48,6 @@ cargo run --example <example_name>
 
 Available examples:
 - `schedule`: Demonstrates schedule viewing features
-- `search`: Shows various search capabilities
-- `info`: Examples of getting detailed information
-- `top`: Demonstrates top-rated content features
 
 See the [examples README](examples/README.md) for detailed information about each example.
 
@@ -107,7 +62,6 @@ animesh/
 │   │   ├── schedule.rs
 │   │   ├── search.rs
 │   │   ├── info.rs
-│   │   ├── top.rs
 │   │   └── mod.rs
 │   ├── display/      # Output formatting and tables
 │   ├── utils/        # Utility functions
@@ -117,7 +71,6 @@ animesh/
 │   ├── schedule.rs
 │   ├── search.rs
 │   ├── info.rs
-│   ├── top.rs
 │   └── README.md
 └── README.md
 ```
@@ -153,7 +106,6 @@ cargo doc --open
 - Created library interface for better code organization
 - Added detailed test cases for all commands
 - Improved error handling and user feedback
-- Added support for manga-related operations
 
 ## Contributing
 
