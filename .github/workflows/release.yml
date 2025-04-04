@@ -74,13 +74,20 @@ jobs:
       with:
         path: artifacts
 
+    - name: Display structure of downloaded files
+      run: find artifacts -type f | sort
+
+    - name: Prepare release assets
+      run: |
+        mkdir -p release-assets
+        find artifacts -type f -name "animesh-*" -exec cp {} release-assets/ \;
+        ls -la release-assets/
+
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        files: |
-          artifacts/animesh-linux.tar.gz
-          artifacts/animesh-macos.tar.gz
-          artifacts/animesh-windows.zip
+        tag_name: ${{ github.ref_name }}
+        files: release-assets/*
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
