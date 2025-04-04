@@ -20,7 +20,7 @@ jobs:
           - os: macos-latest
             artifact_name: animesh-macos
           - os: windows-latest
-            artifact_name: animesh-windows.exe
+            artifact_name: animesh-windows
 
     steps:
     - uses: actions/checkout@v4
