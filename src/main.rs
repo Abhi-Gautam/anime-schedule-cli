@@ -24,7 +24,7 @@ pub enum Commands {
     /// View anime airing schedule
     Schedule {
         /// Day of the week to show schedule for (e.g., monday, tuesday)
-        #[arg(short = 'w', long = "day")]
+        #[arg(short = 'd', long = "day")]
         day: Option<String>,
 
         /// Number of days to show schedule for
@@ -34,6 +34,10 @@ pub enum Commands {
         /// Timezone to show schedule in (e.g., UTC, IST, JST)
         #[arg(short = 't', long = "timezone")]
         timezone: Option<String>,
+
+        /// Show past episodes instead of upcoming ones
+        #[arg(short = 'p', long = "past")]
+        past: bool,
     },
 }
 
@@ -42,8 +46,8 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match &cli.command {
-        Commands::Schedule { day, interval, timezone } => {
-            ScheduleCommand::new(day.clone(), *interval, timezone.clone())
+        Commands::Schedule { day, interval, timezone, past } => {
+            ScheduleCommand::new(day.clone(), *interval, timezone.clone(), *past)
                 .execute()
                 .await
                 .expect("Failed to execute schedule command");

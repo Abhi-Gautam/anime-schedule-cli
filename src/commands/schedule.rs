@@ -16,16 +16,18 @@ pub struct ScheduleCommand {
     day: Option<String>,
     interval: u32,
     timezone: Option<String>,
+    past: bool,
     client: AniListClient,
 }
 
 impl ScheduleCommand {
     /// Create a new schedule command
-    pub fn new(day: Option<String>, interval: u32, timezone: Option<String>) -> Self {
+    pub fn new(day: Option<String>, interval: u32, timezone: Option<String>, past: bool) -> Self {
         Self {
             day,
             interval,
             timezone,
+            past,
             client: AniListClient::new(),
         }
     }
@@ -59,16 +61,25 @@ impl ScheduleCommand {
         
         let target_day = self.get_target_day();
         let current_day = now_local.weekday().num_days_from_monday();
-        let days_diff = if target_day > current_day {
-            target_day - current_day
+        
+        if self.past {
+            // For past episodes, we go backwards from current time
+            let end = now_local.timestamp();
+            let start = end - ((self.interval as i64) * 24 * 3600);
+            (start, end)
         } else {
-            0
-        };
-        
-        let start = now_local.timestamp() + ((days_diff as i64) * 24 * 3600);
-        let end = start + ((self.interval as i64) * 24 * 3600);
-        
-        (start, end)
+            // For future episodes, we go forwards from current time
+            let days_diff = if target_day > current_day {
+                target_day - current_day
+            } else {
+                0
+            };
+            
+            let start = now_local.timestamp() + ((days_diff as i64) * 24 * 3600);
+            let end = start + ((self.interval as i64) * 24 * 3600);
+            
+            (start, end)
+        }
     }
 
     /// Format relative time (e.g., "2h ago", "in 3h")
@@ -182,57 +193,57 @@ mod tests {
 
     #[tokio::test]
     async fn test_schedule_command_today() {
-        let command = ScheduleCommand::new(None, 2, None);
+        let command = ScheduleCommand::new(None, 2, None, false);
         assert!(command.execute().await.is_ok());
     }
 
     #[tokio::test]
     async fn test_schedule_command_specific_day() {
-        let command = ScheduleCommand::new(Some("monday".to_string()), 2, None);
+        let command = ScheduleCommand::new(Some("monday".to_string()), 2, None, false);
         assert!(command.execute().await.is_ok());
     }
 
     #[tokio::test]
     async fn test_schedule_command_with_timezone() {
-        let command = ScheduleCommand::new(None, 2, Some("UTC".to_string()));
+        let command = ScheduleCommand::new(None, 2, Some("UTC".to_string()), false);
         assert!(command.execute().await.is_ok());
     }
 
     #[test]
     fn test_get_timezone() {
-        let command = ScheduleCommand::new(None, 2, None);
+        let command = ScheduleCommand::new(None, 2, None, false);
         let tz = command.get_timezone();
         assert!(tz.utc_minus_local() >= -14 * 3600 && tz.utc_minus_local() <= 14 * 3600);
 
-        let command = ScheduleCommand::new(None, 2, Some("UTC".to_string()));
+        let command = ScheduleCommand::new(None, 2, Some("UTC".to_string()), false);
         let tz = command.get_timezone();
         assert_eq!(tz.utc_minus_local(), 0);
 
-        let command = ScheduleCommand::new(None, 2, Some("IST".to_string()));
+        let command = ScheduleCommand::new(None, 2, Some("IST".to_string()), false);
         let tz = command.get_timezone();
         assert_eq!(tz.utc_minus_local(), -(5 * 3600 + 30 * 60));
     }
 
     #[test]
     fn test_get_target_day() {
-        let command = ScheduleCommand::new(None, 2, None);
+        let command = ScheduleCommand::new(None, 2, None, false);
         let day = command.get_target_day();
         assert!(day < 7);
 
-        let command = ScheduleCommand::new(Some("monday".to_string()), 2, None);
+        let command = ScheduleCommand::new(Some("monday".to_string()), 2, None, false);
         assert_eq!(command.get_target_day(), 0);
     }
 
     #[test]
     fn test_get_time_range() {
-        let command = ScheduleCommand::new(None, 2, None);
+        let command = ScheduleCommand::new(None, 2, None, false);
         let (start, end) = command.get_time_range();
         assert!(end - start == 2 * 24 * 3600);
     }
 
     #[test]
     fn test_format_relative_time() {
-        let command = ScheduleCommand::new(None, 2, None);
+        let command = ScheduleCommand::new(None, 2, None, false);
         let now = Utc::now().timestamp();
         
         // Test past times
@@ -242,5 +253,14 @@ mod tests {
         // Test future times
         assert!(command.format_relative_time(now + 3600).contains("in 1h"));
         assert!(command.format_relative_time(now + 86400).contains("in 1d"));
+    }
+
+    #[test]
+    fn test_get_time_range_past() {
+        let command = ScheduleCommand::new(None, 2, None, true);
+        let (start, end) = command.get_time_range();
+        assert!(end - start == 2 * 24 * 3600);
+        assert!(start < end);
+        assert!(end <= Utc::now().timestamp());
     }
 } 

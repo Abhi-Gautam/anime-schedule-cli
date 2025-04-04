@@ -29,15 +29,3 @@ mockall = "0.11"
 [[example]]
 name = "schedule"
 path = "examples/schedule.rs"
-
-[[example]]
-name = "search"
-path = "examples/search.rs"
-
-[[example]]
-name = "info"
-path = "examples/info.rs"
-
-[[example]]
-name = "top"
-path = "examples/top.rs"
