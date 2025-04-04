@@ -7,7 +7,7 @@ description = "A powerful CLI tool for anime fans to track their favorite shows 
 license = "MIT"
 repository = "https://github.com/yourusername/animesh"
 keywords = ["anime", "cli", "schedule", "anilist", "manga"]
-categories = ["command-line-utilities", "entertainment"]
+categories = ["command-line-utilities", "games", "multimedia"]
 
 [dependencies]
 chrono = "0.4"
