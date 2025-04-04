@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Anime Schedule CLI Demo](examples/images/demo.png)
+![Anime Schedule CLI Demo](examples/images/example1.png)
 
 [![Crates.io](https://img.shields.io/crates/v/animesh)](https://crates.io/crates/animesh)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -46,7 +46,6 @@ animesh schedule --timezone "IST"
 animesh schedule --interval 3 --past
 ```
 
-![Schedule Command Output](examples/images/example1.png)
 ![Schedule Command Output](examples/images/example2.png)
 
 ## 🌍 Timezone Support
