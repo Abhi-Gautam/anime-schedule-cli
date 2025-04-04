@@ -83,6 +83,14 @@ jobs:
         # Verify the change
         cat Cargo.toml | grep "^version ="
     
+    - name: Commit version update
+      run: |
+        git config --global user.name 'GitHub Action'
+        git config --global user.email 'action@github.com'
+        git add Cargo.toml
+        git commit -m "chore: bump version to $VERSION"
+        git push
+    
     - name: Publish to crates.io
       run: cargo publish
       env:
