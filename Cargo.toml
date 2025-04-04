@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["Abhishek Gautam"]
 description = "A powerful CLI tool for anime fans to track their favorite shows and discover new anime"
 license = "MIT"
-repository = "https://github.com/yourusername/animesh"
+repository = "https://github.com/Abhi-Gautam/animesh.git"
 keywords = ["anime", "cli", "schedule", "anilist", "manga"]
 categories = ["command-line-utilities", "games", "multimedia"]
 

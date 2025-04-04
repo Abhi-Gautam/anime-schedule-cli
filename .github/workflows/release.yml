@@ -16,11 +16,11 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            artifact_name: anime-schedule-cli-linux
+            artifact_name: animesh-linux
           - os: macos-latest
-            artifact_name: anime-schedule-cli-macos
+            artifact_name: animesh-macos
           - os: windows-latest
-            artifact_name: anime-schedule-cli-windows.exe
+            artifact_name: animesh-windows.exe
 
     steps:
     - uses: actions/checkout@v4
@@ -40,9 +40,9 @@ jobs:
       run: |
         cd target/release
         if [ "${{ matrix.os }}" = "windows-latest" ]; then
-          7z a ../../${{ matrix.artifact_name }}.zip anime-schedule-cli.exe
+          7z a ../../${{ matrix.artifact_name }}.zip animesh.exe
         else
-          tar czf ../../${{ matrix.artifact_name }}.tar.gz anime-schedule-cli
+          tar czf ../../${{ matrix.artifact_name }}.tar.gz animesh
         fi
     
     - name: Upload artifact
