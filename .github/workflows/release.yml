@@ -40,8 +40,18 @@ jobs:
       run: |
         cd target/release
         if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          if [ ! -f "animesh.exe" ]; then
+            echo "Error: animesh.exe not found in target/release"
+            ls -la
+            exit 1
+          fi
           7z a ../../${{ matrix.artifact_name }}.zip animesh.exe
         else
+          if [ ! -f "animesh" ]; then
+            echo "Error: animesh binary not found in target/release"
+            ls -la
+            exit 1
+          fi
           tar czf ../../${{ matrix.artifact_name }}.tar.gz animesh
         fi
     
