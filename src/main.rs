@@ -6,10 +6,9 @@ mod utils;
 
 use clap::{Parser, Subcommand};
 use commands::{
-    Command, ScheduleCommand, CountdownCommand,
+    Command, ScheduleCommand,
 };
 use anyhow::Result;
-use tokio;
 
 /// A powerful CLI tool for anime fans to track their favorite shows
 #[derive(Parser)]
@@ -21,30 +20,19 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// View anime airing schedule
+    /// Show anime airing schedule
     Schedule {
-        /// Day of the week to show schedule for (e.g., monday, tuesday)
-        #[arg(short = 'd', long = "day")]
-        day: Option<String>,
-
         /// Number of days to show schedule for
-        #[arg(short = 'n', long = "days", default_value = "1")]
+        #[arg(short, long, default_value = "1")]
         interval: u32,
 
-        /// Timezone to show schedule in (e.g., UTC, IST, JST)
-        #[arg(short = 't', long = "timezone")]
+        /// Timezone for schedule display (e.g., "UTC", "IST")
+        #[arg(short, long)]
         timezone: Option<String>,
 
         /// Show past episodes instead of upcoming ones
-        #[arg(short = 'p', long = "past")]
+        #[arg(short, long)]
         past: bool,
-    },
-
-    /// Show countdown for next airing episode
-    Countdown {
-        /// Timezone to show countdown in (e.g., UTC, IST, JST)
-        #[arg(short = 't', long = "timezone")]
-        timezone: Option<String>,
     },
 }
 
@@ -52,19 +40,16 @@ pub enum Commands {
 async fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    match &cli.command {
-        Commands::Schedule { day, interval, timezone, past } => {
-            ScheduleCommand::new(day.clone(), *interval, timezone.clone(), *past)
-                .execute()
-                .await
-                .expect("Failed to execute schedule command");
-        }
-        Commands::Countdown { timezone } => {
-            CountdownCommand::new(timezone.clone())
-                .execute()
-                .await
-                .expect("Failed to execute countdown command");
+    match cli.command {
+        Commands::Schedule {
+            interval,
+            timezone,
+            past,
+        } => {
+            let command = ScheduleCommand::new(interval, timezone, past);
+            command.execute().await?;
         }
     }
+
     Ok(())
 }

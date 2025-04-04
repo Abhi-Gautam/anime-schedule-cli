@@ -1,37 +1,25 @@
-use animesh::{commands::schedule::ScheduleCommand, Command};
+use animesh::commands::{Command, ScheduleCommand};
 
 #[tokio::main]
 async fn main() {
-    // Show next 2 days schedule in your timezone
-    let command = ScheduleCommand::new(None, 2, None, false);
-    command.execute().await.unwrap();
+    // Show schedule for next 2 days (default)
+    println!("Showing schedule for next 2 days:");
+    ScheduleCommand::new(2, None, false)
+        .execute()
+        .await
+        .expect("Failed to execute schedule command");
 
-    // Show next 2 days schedule in IST
-    let command = ScheduleCommand::new(None, 2, Some("IST".to_string()), false);
-    command.execute().await.unwrap();
+    // Show schedule for next 7 days in UTC
+    println!("\nShowing schedule for next 7 days in UTC:");
+    ScheduleCommand::new(7, Some("UTC".to_string()), false)
+        .execute()
+        .await
+        .expect("Failed to execute schedule command");
 
-    // Show next 2 days schedule for Monday
-    let command = ScheduleCommand::new(Some("monday".to_string()), 2, None, false);
-    command.execute().await.unwrap();
-
-    // Show next 5 days schedule
-    let command = ScheduleCommand::new(None, 5, None, false);
-    command.execute().await.unwrap();
-
-    // Show next 7 days schedule for Wednesday in PST
-    let command = ScheduleCommand::new(
-        Some("wednesday".to_string()),
-        7,
-        Some("PST".to_string()),
-        false,
-    );
-    command.execute().await.unwrap();
-
-    // Show next 14 days schedule in EST
-    let command = ScheduleCommand::new(None, 14, Some("EST".to_string()), false);
-    command.execute().await.unwrap();
-
-    // Show past 2 days schedule
-    let command = ScheduleCommand::new(None, 2, None, true);
-    command.execute().await.unwrap();
-} 
+    // Show past episodes from last 3 days
+    println!("\nShowing past episodes from last 3 days:");
+    ScheduleCommand::new(3, None, true)
+        .execute()
+        .await
+        .expect("Failed to execute schedule command");
+}

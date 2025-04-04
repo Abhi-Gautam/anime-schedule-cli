@@ -36,6 +36,12 @@ impl AniListClient {
     }
 }
 
+impl Default for AniListClient {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -55,8 +61,8 @@ mod tests {
                 }
             }
         "#;
-        
+
         let result: serde_json::Value = client.query(query, serde_json::json!({})).await.unwrap();
         assert!(result.get("data").is_some());
     }
-} 
+}

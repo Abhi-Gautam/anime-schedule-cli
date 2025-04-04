@@ -1,33 +1,66 @@
-# Anime Schedule CLI Examples
+# Animesh Examples
 
-This directory contains example programs demonstrating the various features of the Anime Schedule CLI.
+This directory contains example programs demonstrating the usage of the Animesh library.
 
-## Running the Examples
+## Schedule Example
 
-To run any of the examples, use the following command:
+The `schedule.rs` example demonstrates how to use the schedule command to view anime airing schedules:
 
-```bash
-cargo run --example <example_name>
+```rust
+use animesh::commands::{Command, ScheduleCommand};
+
+#[tokio::main]
+async fn main() {
+    // Show schedule for next 2 days (default)
+    ScheduleCommand::new(2, None, false)
+        .execute()
+        .await
+        .expect("Failed to execute schedule command");
+
+    // Show schedule for next 7 days in UTC
+    ScheduleCommand::new(7, Some("UTC".to_string()), false)
+        .execute()
+        .await
+        .expect("Failed to execute schedule command");
+
+    // Show past episodes from last 3 days
+    ScheduleCommand::new(3, None, true)
+        .execute()
+        .await
+        .expect("Failed to execute schedule command");
+}
 ```
 
-For example:
+Run this example using:
 ```bash
 cargo run --example schedule
-cargo run --example search
-cargo run --example info
-cargo run --example top
+```
+
+## Countdown Example
+
+The `countdown.rs` example demonstrates how to use the countdown command to show countdown for a specific anime:
+
+```rust
+use animesh::commands::{Command, CountdownCommand};
+
+#[tokio::main]
+async fn main() {
+    // Show countdown for One Piece
+    CountdownCommand::new("One Piece".to_string())
+        .execute()
+        .await
+        .expect("Failed to execute countdown command");
+}
+```
+
+Run this example using:
+```bash
+cargo run --example countdown
 ```
 
 ## Available Examples
 
-### 1. Schedule Examples (`schedule.rs`)
-- Show today's schedule
-- Show schedule for a specific day
-- Show schedule with custom timezone
-- Show schedule for all days of the week
-- Show schedule using short day names
-
-### 2. Search Examples (`search.rs`)
+### 1. Search Examples (`search.rs`)
 - Search for anime
 - Search for manga
 - Search with year filter
@@ -36,7 +69,7 @@ cargo run --example top
 - Search without type specification
 - Search with different seasons
 
-### 3. Info Examples (`info.rs`)
+### 2. Info Examples (`info.rs`)
 - Get basic anime info
 - Get basic manga info
 - Get anime info with characters
@@ -46,7 +79,7 @@ cargo run --example top
 - Get manga info with staff
 - Get info for multiple popular anime
 
-### 4. Top Examples (`top.rs`)
+### 3. Top Examples (`top.rs`)
 - Show top anime
 - Show top manga
 - Show top anime by genre
