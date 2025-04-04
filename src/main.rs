@@ -4,11 +4,9 @@ mod commands;
 mod display;
 mod utils;
 
-use clap::{Parser, Subcommand};
-use commands::{
-    Command, ScheduleCommand,
-};
 use anyhow::Result;
+use clap::{Parser, Subcommand};
+use commands::{Command, ScheduleCommand};
 
 /// A powerful CLI tool for anime fans to track their favorite shows
 #[derive(Parser)]
