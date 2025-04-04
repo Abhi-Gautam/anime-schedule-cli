@@ -24,8 +24,35 @@ A powerful command-line tool to track your favorite anime shows and discover new
 
 ## 🚀 Installation
 
+### Using Cargo (Recommended)
+
 ```bash
 cargo install animesh
+```
+
+### Using Release Assets
+
+1. Visit the [Releases](https://github.com/Abhi-Gautam/animesh/releases) page
+2. Download the appropriate asset for your platform:
+   - Windows: `animesh-windows.zip`
+   - macOS: `animesh-macos.tar.gz`
+   - Linux: `animesh-linux.tar.gz`
+3. Extract the archive
+4. Add the binary to your PATH:
+
+#### Windows
+```powershell
+# Add to PATH for current user
+$env:Path += ";C:\path\to\extracted\folder"
+# Or add to system PATH through System Properties > Environment Variables
+```
+
+#### macOS/Linux
+```bash
+# Move binary to a directory in your PATH
+sudo mv animesh /usr/local/bin/
+# Or add to PATH in your shell config (~/.bashrc, ~/.zshrc, etc.)
+export PATH="$PATH:/path/to/extracted/folder"
 ```
 
 ## 📖 Usage
