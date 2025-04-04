@@ -70,6 +70,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        ref: master
     
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
@@ -89,7 +91,7 @@ jobs:
         git config --global user.email 'action@github.com'
         git add Cargo.toml
         git commit -m "chore: bump version to $VERSION"
-        git push
+        git push origin master
     
     - name: Publish to crates.io
       run: cargo publish
