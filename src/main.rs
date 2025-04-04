@@ -6,7 +6,7 @@ mod utils;
 
 use clap::{Parser, Subcommand};
 use commands::{
-    Command, ScheduleCommand,
+    Command, ScheduleCommand, CountdownCommand,
 };
 use anyhow::Result;
 use tokio;
@@ -39,6 +39,13 @@ pub enum Commands {
         #[arg(short = 'p', long = "past")]
         past: bool,
     },
+
+    /// Show countdown for next airing episode
+    Countdown {
+        /// Timezone to show countdown in (e.g., UTC, IST, JST)
+        #[arg(short = 't', long = "timezone")]
+        timezone: Option<String>,
+    },
 }
 
 #[tokio::main]
@@ -51,6 +58,12 @@ async fn main() -> Result<()> {
                 .execute()
                 .await
                 .expect("Failed to execute schedule command");
+        }
+        Commands::Countdown { timezone } => {
+            CountdownCommand::new(timezone.clone())
+                .execute()
+                .await
+                .expect("Failed to execute countdown command");
         }
     }
     Ok(())
