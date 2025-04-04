@@ -8,7 +8,7 @@ use crate::{
     api::AniListClient,
     commands::Command,
     display::{create_table, format_datetime, styled_cell},
-    utils::{get_user_timezone, parse_day_of_week},
+    utils::{get_user_timezone, parse_day_of_week, match_timezone},
 };
 
 /// Command to show upcoming anime airing schedule
@@ -33,14 +33,10 @@ impl ScheduleCommand {
     /// Get the timezone to use for display
     fn get_timezone(&self) -> FixedOffset {
         if let Some(tz) = &self.timezone {
-            match tz.to_uppercase().as_str() {
-                "UTC" => FixedOffset::east_opt(0).unwrap(),
-                "IST" => FixedOffset::east_opt(5 * 3600 + 30 * 60).unwrap(), // UTC+5:30
-                "JST" => FixedOffset::east_opt(9 * 3600).unwrap(), // UTC+9
-                "PST" => FixedOffset::west_opt(8 * 3600).unwrap(), // UTC-8
-                "EST" => FixedOffset::west_opt(5 * 3600).unwrap(), // UTC-5
-                _ => get_user_timezone(), // Fallback to user's timezone
-            }
+            match_timezone(&tz).unwrap_or_else(|| {
+                eprintln!("Invalid timezone: {}. Using default timezone.", tz);
+                get_user_timezone()
+            })
         } else {
             get_user_timezone()
         }

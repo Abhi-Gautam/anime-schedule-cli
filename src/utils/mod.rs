@@ -1,24 +1,32 @@
 use chrono::FixedOffset;
 use std::env;
 
+/// Match timezone string to FixedOffset
+pub fn match_timezone(tz: &str) -> Option<FixedOffset> {
+    match tz.to_uppercase().as_str() {
+        "UTC" => Some(FixedOffset::east_opt(0).unwrap()),
+        "IST" => Some(FixedOffset::east_opt(5 * 3600 + 30 * 60).unwrap()), // UTC+5:30
+        "JST" => Some(FixedOffset::east_opt(9 * 3600).unwrap()), // UTC+9
+        "PST" => Some(FixedOffset::west_opt(8 * 3600).unwrap()), // UTC-8
+        "EST" => Some(FixedOffset::west_opt(5 * 3600).unwrap()), // UTC-5
+        _ => {
+            // Try to parse as offset (e.g., "+05:30")
+            if let Ok(offset) = tz.parse::<i32>() {
+                Some(FixedOffset::east_opt(offset * 3600)
+                    .unwrap_or(FixedOffset::east_opt(0).unwrap()))
+            } else {
+                None
+            }
+        }
+    }
+}
+
 /// Get the user's timezone from environment variables
 pub fn get_user_timezone() -> FixedOffset {
     // Try to get timezone from TZ environment variable
     if let Ok(tz) = env::var("TZ") {
-        println!("Found TZ environment variable: {}", tz);
-        match tz.to_uppercase().as_str() {
-            "UTC" => return FixedOffset::east_opt(0).unwrap(),
-            "IST" => return FixedOffset::east_opt(5 * 3600 + 30 * 60).unwrap(), // UTC+5:30
-            "JST" => return FixedOffset::east_opt(9 * 3600).unwrap(), // UTC+9
-            "PST" => return FixedOffset::west_opt(8 * 3600).unwrap(), // UTC-8
-            "EST" => return FixedOffset::west_opt(5 * 3600).unwrap(), // UTC-5
-            _ => {
-                // Try to parse as offset (e.g., "+05:30")
-                if let Ok(offset) = tz.parse::<i32>() {
-                    return FixedOffset::east_opt(offset * 3600)
-                        .unwrap_or(FixedOffset::east_opt(0).unwrap());
-                }
-            }
+        if let Some(offset) = match_timezone(&tz) {
+            return offset;
         }
     }
 
@@ -29,13 +37,8 @@ pub fn get_user_timezone() -> FixedOffset {
             .arg("-gettimezone")
             .output() {
             if let Ok(tz) = String::from_utf8(output.stdout) {
-                match tz.trim().to_uppercase().as_str() {
-                    "UTC" => return FixedOffset::east_opt(0).unwrap(),
-                    "IST" => return FixedOffset::east_opt(5 * 3600 + 30 * 60).unwrap(),
-                    "JST" => return FixedOffset::east_opt(9 * 3600).unwrap(),
-                    "PST" => return FixedOffset::west_opt(8 * 3600).unwrap(),
-                    "EST" => return FixedOffset::west_opt(5 * 3600).unwrap(),
-                    _ => {}
+                if let Some(offset) = match_timezone(tz.trim()) {
+                    return offset;
                 }
             }
         }
