@@ -33,7 +33,7 @@ impl ScheduleCommand {
     /// Get the timezone to use for display
     fn get_timezone(&self) -> FixedOffset {
         if let Some(tz) = &self.timezone {
-            match_timezone(tz).unwrap_or_else(|| {
+            match_timezone(&tz).unwrap_or_else(|| {
                 eprintln!("Invalid timezone: {}. Using default timezone.", tz);
                 get_user_timezone()
             })
