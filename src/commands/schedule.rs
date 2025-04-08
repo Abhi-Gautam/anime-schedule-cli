@@ -1,13 +1,13 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::{Duration, FixedOffset, TimeZone, Utc};
-use prettytable::{color, Row};
+use comfy_table::{Attribute, Cell, Color, ContentArrangement, Table};
 use serde_json::Value;
 
 use crate::{
     api::AniListClient,
     commands::Command,
-    display::{create_table, format_datetime, styled_cell},
+    display::format_datetime,
     utils::{get_user_timezone, match_timezone},
 };
 
@@ -139,12 +139,18 @@ impl Command for ScheduleCommand {
             .as_array()
             .unwrap();
 
-        // Create and populate table with timezone header
-        let mut table = create_table(&[
-            &format!("Schedule ({})", tz_name),
-            "Episode",
-            "Time",
-            "Status",
+        let mut table = Table::new();
+
+        // Set dynamic width arrangement - THIS ENABLES WRAPPING AND DYNAMIC SIZING
+        table.set_content_arrangement(ContentArrangement::Dynamic);
+        table.load_preset(comfy_table::presets::UTF8_FULL);
+
+        // Set table headers (can add styling like bold)
+        table.set_header(vec![
+            Cell::new(format!("Schedule ({})", tz_name)).add_attribute(Attribute::Bold),
+            Cell::new("Episode").add_attribute(Attribute::Bold),
+            Cell::new("Time").add_attribute(Attribute::Bold),
+            Cell::new("Status").add_attribute(Attribute::Bold),
         ]);
 
         for schedule in schedules {
@@ -156,26 +162,23 @@ impl Command for ScheduleCommand {
             let episode: i64 = schedule["episode"].as_i64().unwrap_or(0);
             let airing_at: i64 = schedule["airingAt"].as_i64().unwrap_or(0);
 
-            let airing_time = Utc.timestamp_opt(airing_at, 0).unwrap();
-            let formatted_time = format_datetime(airing_time, timezone);
+            let airing_time_utc = Utc.timestamp_opt(airing_at, 0).unwrap();
+            let formatted_time = format_datetime(airing_time_utc, timezone);
             let relative_time = self.format_relative_time(airing_at);
 
-            table.add_row(Row::new(vec![
-                styled_cell(title, color::CYAN),
-                styled_cell(&episode.to_string(), color::YELLOW),
-                styled_cell(&formatted_time, color::GREEN),
-                styled_cell(
-                    &relative_time,
-                    if airing_at < Utc::now().timestamp() {
-                        color::RED
-                    } else {
-                        color::BLUE
-                    },
-                ),
-            ]));
+            // Add row with comfy_table Cells and styling
+            table.add_row(vec![
+                Cell::new(title).fg(Color::Cyan), // Use comfy_table::Color
+                Cell::new(episode.to_string()).fg(Color::Yellow),
+                Cell::new(formatted_time).fg(Color::Green),
+                Cell::new(relative_time).fg(if airing_at < Utc::now().timestamp() {
+                    Color::Red
+                } else {
+                    Color::Blue
+                }),
+            ]);
         }
-
-        table.printstd();
+        println!("{table}");
         Ok(())
     }
 }
